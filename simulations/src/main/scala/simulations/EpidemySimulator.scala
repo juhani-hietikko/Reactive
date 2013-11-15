@@ -10,7 +10,9 @@ class EpidemySimulator extends Simulator {
     val population: Int = 300
     val roomRows: Int = 8
     val roomColumns: Int = 8
-    val infectionRateInverted = 100
+    val infectionRateInverted = 100  // 1 % inverted = 100 / 1
+    val transmissibilityRate = 0.4
+    val deathRate = 0.25
   }
 
   import SimConfig._
@@ -24,7 +26,7 @@ class EpidemySimulator extends Simulator {
   import Direction._
   
   class Person (val id: Int) {
-    var infected = id % infectionRateInverted == 0
+    var infected = false
     var sick = false
     var immune = false
     var dead = false
@@ -32,24 +34,70 @@ class EpidemySimulator extends Simulator {
     var row: Int = randomBelow(roomRows)
     var col: Int = randomBelow(roomColumns)
 
-    def scheduleNextMove = afterDelay(1 + randomBelow(5))(move)
+    if (id % infectionRateInverted == 0) {
+      getInfected
+    }
     scheduleNextMove
     
-    def move() {
+    private def scheduleNextMove = afterDelay(1 + randomBelow(5))(move)
+    
+    private def move {
       if (!dead) {
         val potentialMoves = 
-          List(potentialMove(Up), potentialMove(Right), potentialMove(Down), potentialMove(Left))
+          List(coordsIfMoving(Up), coordsIfMoving(Right), coordsIfMoving(Down), coordsIfMoving(Left))
           .filter(isSafeToEnter)
         if (potentialMoves.size > 0) {
           val selectedMove = potentialMoves(randomBelow(potentialMoves.size))
           row = selectedMove._1
           col = selectedMove._2
+          if (!infected && !immune && getsInfected) {
+            getInfected
+          }
         }
         scheduleNextMove
       }
     }
     
-    def potentialMove(dir: Direction.Value) = {
+    private def getInfected {
+      if (!dead) {
+        infected = true
+        afterDelay(6)(becomeSick)
+      }
+    }
+    
+    private def becomeSick {
+      if (!dead) {
+        sick = true
+        afterDelay(8)(maybeDie)
+      }
+    }
+    
+    private def maybeDie {
+      if (!dead) {
+        if (random < deathRate) {
+          dead = true;
+        } else {
+          afterDelay(2)(becomeImmune)
+        }
+      }
+    }
+    
+    private def becomeImmune {
+      if (!dead) {
+        immune = true
+        sick = false
+        afterDelay(2)(loseImmunity)
+      }
+    }
+    
+    private def loseImmunity {
+      if (!dead) {
+        immune = false
+        infected = false
+      }
+    }
+    
+    private def coordsIfMoving(dir: Direction.Value) = {
       dir match {
         case Up => {
           val newRow = if (row == roomRows - 1) 0 else row + 1
@@ -70,8 +118,16 @@ class EpidemySimulator extends Simulator {
       }
     }
     
-    def isSafeToEnter(coords: (Int, Int)) = coords match {
+    private def isSafeToEnter(coords: (Int, Int)) = coords match {
       case (x, y) => !persons.exists(p => p.col == x && p.row == y && p.sick)
+    }
+    
+    private def getsInfected = {
+      if (persons.exists(p => p.col == col && p.row == row && p.infected)) {
+        random < transmissibilityRate
+      } else {
+        false;
+      }
     }
   }
 }
