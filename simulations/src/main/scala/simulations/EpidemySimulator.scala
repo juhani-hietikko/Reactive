@@ -10,26 +10,68 @@ class EpidemySimulator extends Simulator {
     val population: Int = 300
     val roomRows: Int = 8
     val roomColumns: Int = 8
-
-    // to complete: additional parameters of simulation
+    val infectionRateInverted = 100
   }
 
   import SimConfig._
 
-  val persons: List[Person] = List() // to complete: construct list of persons
-
+  val persons: List[Person] = for (pid <- List.range(0, population)) yield new Person(pid)
+  
+  object Direction extends Enumeration {
+    type Direction = Value
+    val Up, Down, Left, Right = Value
+  }
+  import Direction._
+  
   class Person (val id: Int) {
-    var infected = false
+    var infected = id % infectionRateInverted == 0
     var sick = false
     var immune = false
     var dead = false
 
-    // demonstrates random number generation
     var row: Int = randomBelow(roomRows)
     var col: Int = randomBelow(roomColumns)
 
-    //
-    // to complete with simulation logic
-    //
+    def scheduleNextMove = afterDelay(1 + randomBelow(5))(move)
+    scheduleNextMove
+    
+    def move() {
+      if (!dead) {
+        val potentialMoves = 
+          List(potentialMove(Up), potentialMove(Right), potentialMove(Down), potentialMove(Left))
+          .filter(isSafeToEnter)
+        if (potentialMoves.size > 0) {
+          val selectedMove = potentialMoves(randomBelow(potentialMoves.size))
+          row = selectedMove._1
+          col = selectedMove._2
+        }
+        scheduleNextMove
+      }
+    }
+    
+    def potentialMove(dir: Direction.Value) = {
+      dir match {
+        case Up => {
+          val newRow = if (row == roomRows - 1) 0 else row + 1
+          (newRow, col)
+        }
+        case Down => {
+          val newRow = if (row == 0) roomRows - 1 else row - 1
+          (newRow, col)
+        }
+        case Left => {
+          val newCol = if (col == 0) roomColumns - 1 else col
+          (row, newCol)
+        }
+        case Right => {
+          val newCol = if (col == roomColumns - 1) 0 else col + 1
+          (row, newCol)
+        }
+      }
+    }
+    
+    def isSafeToEnter(coords: (Int, Int)) = coords match {
+      case (x, y) => !persons.exists(p => p.col == x && p.row == y && p.sick)
+    }
   }
 }
