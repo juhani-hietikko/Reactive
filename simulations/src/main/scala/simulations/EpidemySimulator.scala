@@ -41,11 +41,9 @@ class EpidemySimulator extends Simulator {
     
     private def scheduleNextMove = afterDelay(1 + randomBelow(5))(move)
     
-    private def move {
+    def move {
       if (!dead) {
-        val potentialMoves = 
-          List(coordsIfMoving(Up), coordsIfMoving(Right), coordsIfMoving(Down), coordsIfMoving(Left))
-          .filter(isSafeToEnter)
+        val potentialMoves = List(coordsIfMoving(Up), coordsIfMoving(Right), coordsIfMoving(Down), coordsIfMoving(Left)).filter(isSafeToEnter)
         if (potentialMoves.size > 0) {
           val selectedMove = potentialMoves(randomBelow(potentialMoves.size))
           row = selectedMove._1
@@ -108,7 +106,7 @@ class EpidemySimulator extends Simulator {
           (newRow, col)
         }
         case Left => {
-          val newCol = if (col == 0) roomColumns - 1 else col
+          val newCol = if (col == 0) roomColumns - 1 else col - 1
           (row, newCol)
         }
         case Right => {
@@ -118,12 +116,12 @@ class EpidemySimulator extends Simulator {
       }
     }
     
-    private def isSafeToEnter(coords: (Int, Int)) = coords match {
-      case (x, y) => !persons.exists(p => p.col == x && p.row == y && p.sick)
+    def isSafeToEnter(coords: (Int, Int)) = coords match {
+      case (x, y) => !persons.exists(p => p.row == x && p.col == y && p.sick)
     }
     
     private def getsInfected = {
-      if (persons.exists(p => p.col == col && p.row == row && p.infected)) {
+      if (persons.exists(p => p.row == row && p.col == col && p.infected)) {
         random < transmissibilityRate
       } else {
         false;

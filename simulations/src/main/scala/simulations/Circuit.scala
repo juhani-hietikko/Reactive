@@ -82,8 +82,8 @@ abstract class CircuitSimulator extends Simulator {
         val (leftOuts, rightOuts) = out.splitAt(out.size / 2)
         val internalOut0, internalOut1 = new Wire
         in addAction createTwoToOneDemuxAction(in, headControlWire, internalOut0, internalOut1)
-        demux(internalOut0, tailControlWires, leftOuts)
-        demux(internalOut1, tailControlWires, rightOuts)
+        demux(internalOut0, tailControlWires, rightOuts)
+        demux(internalOut1, tailControlWires, leftOuts)
       }
       case Nil => {
         in addAction createPassthroughAction(in, out.head)

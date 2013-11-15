@@ -98,4 +98,37 @@ class EpidemySuite extends FunSuite {
 	  }
 	  assert(infectedTimes > 0, "A person should get infected according to the transmissibility rate when he moves into a room with an infectious person")
   }
+  
+  test("safe to enter") {
+    val es = new EpidemySimulator
+    val chosenOne = es.persons.head
+    chosenOne.col = 0
+    chosenOne.row = 0
+    chosenOne.sick = true
+    assert(chosenOne.isSafeToEnter((0, 0)) == false)
+    assert(chosenOne.isSafeToEnter((1, 1)) == true)
+  }
+  
+  test("moves in the one safe room") {
+    val es = new EpidemySimulator
+    val chosenOne = es.persons(0)
+    val sick1 = es.persons(1)
+    val sick2 = es.persons(2)
+    val sick3 = es.persons(3)
+    chosenOne.col = 2
+    chosenOne.row = 2
+    sick1.col = 1
+    sick1.row = 2
+    sick1.sick = true
+    sick2.col = 3
+    sick2.row = 2
+    sick2.sick = true
+    sick3.col = 2
+    sick3.row = 1
+    sick3.sick = true
+    
+    chosenOne.move
+    assert(chosenOne.row === 3)
+    assert(chosenOne.col === 2)
+  }
 }

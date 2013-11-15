@@ -100,7 +100,7 @@ class CircuitSuite extends CircuitSimulator with FunSuite {
   
   test("demux with 1 control wire") {
     val in, out0, out1, c = new Wire
-    demux(in, List(c), List(out0, out1))
+    demux(in, List(c), List(out1, out0))
     
     in.setSignal(false)
     c.setSignal(false)
@@ -129,20 +129,20 @@ class CircuitSuite extends CircuitSimulator with FunSuite {
   
   test("demux with 2 control wires") {
     val in, out0, out1, out2, out3, c0, c1 = new Wire
-    demux(in, List(c0, c1), List(out0, out1, out2, out3))
+    demux(in, List(c1, c0), List(out3, out2, out1, out0))
     
     in.setSignal(true)
-    c0.setSignal(false)
     c1.setSignal(true)
+    c0.setSignal(false)
     run
     assert(out0.getSignal === false, "true-false-true out0")
-    assert(out1.getSignal === true, "true-false-true out1")
-    assert(out2.getSignal === false, "true-false-true out2")
+    assert(out1.getSignal === false, "true-false-true out1")
+    assert(out2.getSignal === true, "true-false-true out2")
     assert(out3.getSignal === false, "true-false-true out3")
     
     in.setSignal(true)
-    c0.setSignal(true)
     c1.setSignal(true)
+    c0.setSignal(true)
     run
     assert(out0.getSignal === false, "true-true-true out0")
     assert(out1.getSignal === false, "true-true-true out1")
@@ -152,18 +152,18 @@ class CircuitSuite extends CircuitSimulator with FunSuite {
   
   test("demux with 3 control wires") {
     val in, out0, out1, out2, out3, out4, out5, out6, out7, c0, c1, c2 = new Wire
-    demux(in, List(c0, c1, c2), List(out0, out1, out2, out3, out4, out5, out6, out7))
+    demux(in, List(c2, c1, c0), List(out7, out6, out5, out4, out3, out2, out1, out0))
     
     in.setSignal(true)
-    c0.setSignal(true)
-    c1.setSignal(false)
     c2.setSignal(true)
+    c1.setSignal(false)
+    c0.setSignal(true)
     run
     assert(out0.getSignal === false, "out0")  // 000
     assert(out1.getSignal === false, "out1")   // 001
     assert(out2.getSignal === false, "out2")  // 010
     assert(out3.getSignal === false, "out3")  // 011
-    assert(out4.getSignal === false,"out4")   // 100
+    assert(out4.getSignal === false, "out4")   // 100
     assert(out5.getSignal === true, "out5")  // 101
     assert(out6.getSignal === false, "out6")  // 110
     assert(out7.getSignal === false, "out7")   // 111
