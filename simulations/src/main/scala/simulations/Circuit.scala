@@ -75,11 +75,20 @@ abstract class CircuitSimulator extends Simulator {
     andGate(in1, in2, out)
     inverter(out, output)
   }
-
+  
   def demux(in: Wire, c: List[Wire], out: List[Wire]) {
-     
-    
-    in addAction createPassthroughAction(in, out.head)
+    c match {
+      case headControlWire::tailControlWires => {
+        val (leftOuts, rightOuts) = out.splitAt(out.size / 2)
+        val internalOut0, internalOut1 = new Wire
+        in addAction createTwoToOneDemuxAction(in, headControlWire, internalOut0, internalOut1)
+        demux(internalOut0, tailControlWires, leftOuts)
+        demux(internalOut1, tailControlWires, rightOuts)
+      }
+      case Nil => {
+        in addAction createPassthroughAction(in, out.head)
+      }
+    }
   }
   
   def createPassthroughAction(inw: Wire, outw: Wire) = () => outw.setSignal(inw.getSignal)
