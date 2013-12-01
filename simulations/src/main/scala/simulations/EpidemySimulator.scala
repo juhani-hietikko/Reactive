@@ -13,6 +13,9 @@ class EpidemySimulator extends Simulator {
     val infectionRateInverted = 100  // 1 % inverted = 100 / 1
     val transmissibilityRate = 0.4
     val deathRate = 0.25
+    val flightProbability = 0.01
+    val reducedMobility = false
+    val vaccinationRateInverted = 20000
   }
 
   import SimConfig._
@@ -34,22 +37,43 @@ class EpidemySimulator extends Simulator {
     var row: Int = randomBelow(roomRows)
     var col: Int = randomBelow(roomColumns)
 
+    if ((id + 1) % vaccinationRateInverted == 0) {
+      immune = true
+    }
     if (id % infectionRateInverted == 0) {
       getInfected
     }
     scheduleNextMove
     
-    private def scheduleNextMove = afterDelay(1 + randomBelow(5))(move)
+    private def scheduleNextMove = afterDelay(movementDelay)(move)
+    
+    private def movementDelay = {
+      if (reducedMobility && sick) {
+        1 + randomBelow(20)
+      } else if (reducedMobility) {
+        1 + randomBelow(10)
+      } else {
+        1 + randomBelow(5)
+      }
+    }
     
     def move {
       if (!dead) {
-        val potentialMoves = List(coordsIfMoving(Up), coordsIfMoving(Right), coordsIfMoving(Down), coordsIfMoving(Left)).filter(isSafeToEnter)
-        if (potentialMoves.size > 0) {
-          val selectedMove = potentialMoves(randomBelow(potentialMoves.size))
-          row = selectedMove._1
-          col = selectedMove._2
+        if (random < flightProbability) {
+          row = randomBelow(roomRows)
+          col = randomBelow(roomColumns)
           if (!infected && !immune && getsInfected) {
             getInfected
+          }
+        } else {
+          val potentialMoves = List(coordsIfMoving(Up), coordsIfMoving(Right), coordsIfMoving(Down), coordsIfMoving(Left)).filter(isSafeToEnter)
+          if (potentialMoves.size > 0) {
+            val selectedMove = potentialMoves(randomBelow(potentialMoves.size))
+            row = selectedMove._1
+            col = selectedMove._2
+            if (!infected && !immune && getsInfected) {
+              getInfected
+            }
           }
         }
         scheduleNextMove
